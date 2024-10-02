@@ -1,5 +1,5 @@
 /// Main logic for the CPU
-/// Following 
+/// Following
 /// https://gbdev.io/pandocs/CPU_Registers_and_Flags.html#the-flags-register-lower-8-bits-of-af-register
 use crate::register::{self, ProgramCounter, Registers, StackPointer};
 
@@ -28,7 +28,6 @@ impl Cpu {
             mem: [0; 256],
         }
     }
-    
 
     pub fn cpu_step(&mut self) {
         match self.mem[self.registers.pc.value() as usize] {
@@ -37,9 +36,11 @@ impl Cpu {
                 self.registers.pc.increment();
             }
             _ => {
-                panic!("Unimplemented opcode: {:#04x}", self.mem[self.registers.pc.value() as usize]);
+                panic!(
+                    "Unimplemented opcode: {:#04x}",
+                    self.mem[self.registers.pc.value() as usize]
+                );
             }
         }
     }
 }
-
