@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-use log::info;
+use log::{debug, info};
 
 #[repr(usize)]
 enum Address {
@@ -38,6 +38,7 @@ pub trait Cartdrige: Send {
                 panic!("Invalid Nintendo logo");
             }
         }
+        debug!("Nintendo logo is valid");
     }
 
     fn ensure_header_checksum(&self) {
@@ -52,6 +53,7 @@ pub trait Cartdrige: Send {
                 self.read(Address::HeaderCheckSum as u16)
             );
         }
+        debug!("Header checksum is valid");
     }
 
     fn get_title(&self) -> String {
