@@ -69,6 +69,15 @@ pub trait Cartdrige: Send {
 
 pub struct RomOnly(pub Vec<u8>);
 
+impl Cartdrige for RomOnly {
+    fn read(&self, address: u16) -> u8 {
+        self.0[address as usize]
+    }
+    fn set(&mut self, _address: u16, _value: u8) {
+        panic!("Cannot write to ROM");
+    }
+}
+
 fn rom_size(rom_max: usize) -> usize {
     let v = 16384; // 32 KiB / 2
     match rom_max {
@@ -110,13 +119,4 @@ pub fn load(path: &str) -> Box<dyn Cartdrige> {
     res.ensure_header_checksum();
     info!("ROM title: {}", res.get_title());
     res
-}
-
-impl Cartdrige for RomOnly {
-    fn read(&self, address: u16) -> u8 {
-        self.0[address as usize]
-    }
-    fn set(&mut self, _address: u16, _value: u8) {
-        panic!("Cannot write to ROM");
-    }
 }
