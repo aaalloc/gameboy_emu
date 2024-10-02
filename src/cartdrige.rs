@@ -9,8 +9,7 @@ enum Address {
     CartridgeType = 0x147,
     HeaderCheckSum = 0x14D,
 }
-
-#[warn(non_snake_case)]
+#[allow(non_snake_case)]
 mod AddressRanges {
     use std::ops::RangeInclusive;
     pub const TITLE: RangeInclusive<u16> = 0x0134..=0x0143;

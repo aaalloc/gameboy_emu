@@ -15,6 +15,10 @@ pub fn main() {
     info!("starting up");
     let args: Vec<String> = env::args().collect();
     let rom_path = &args[1];
-    // window::sdl2_example();
+
     let rom = cartdrige::load(rom_path);
+    let mut cpu = cpu::Cpu::new(rom);
+    loop {
+        cpu.cpu_step();
+    }
 }

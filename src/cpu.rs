@@ -1,15 +1,18 @@
 /// Main logic for the CPU
 /// Following
 /// https://gbdev.io/pandocs/CPU_Registers_and_Flags.html#the-flags-register-lower-8-bits-of-af-register
-use crate::register::{self, ProgramCounter, Registers, StackPointer};
+use crate::{
+    cartdrige::Cartdrige,
+    register::{self, ProgramCounter, Registers, StackPointer},
+};
 
 pub struct Cpu {
     pub registers: Registers,
-    pub mem: [u8; 256],
+    pub cartdrige: Box<dyn Cartdrige>,
 }
 
 impl Cpu {
-    pub fn new() -> Self {
+    pub fn new(cartdrige: Box<dyn Cartdrige>) -> Self {
         Self {
             // Following DMG
             // https://gbdev.io/pandocs/Power_Up_Sequence.html?highlight=half#cpu-registers
@@ -25,12 +28,12 @@ impl Cpu {
                 sp: StackPointer(0xFFFE),
                 pc: ProgramCounter(0x0100),
             },
-            mem: [0; 256],
+            cartdrige,
         }
     }
 
     pub fn cpu_step(&mut self) {
-        match self.mem[self.registers.pc.value() as usize] {
+        match self.cartdrige.read(self.registers.pc.value()) {
             0x00 => {
                 // NOP
                 self.registers.pc.increment();
@@ -38,7 +41,7 @@ impl Cpu {
             _ => {
                 panic!(
                     "Unimplemented opcode: {:#04x}",
-                    self.mem[self.registers.pc.value() as usize]
+                    self.cartdrige.read(self.registers.pc.value())
                 );
             }
         }
