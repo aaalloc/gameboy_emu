@@ -18,7 +18,7 @@ pub struct Cpu {
 pub struct Instruction {
     pub opcode: u8,
     pub mnemonic: &'static str,
-    pub length: u8,
+    pub length: u8, // in bytes
     pub cycles: u8,
     pub execute: fn(&mut Cpu),
 }
@@ -48,6 +48,34 @@ lazy_static! {
                     execute: |cpu: &mut Cpu| {
                         let word = cpu.cartdrige.read_word(cpu.registers.pc.value());
                         cpu.registers.pc.0 = word;
+                    },
+                },
+            ),
+            (
+                0x60,
+                Instruction {
+                    opcode: 0x60,
+                    mnemonic: "LD H,B",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.h = cpu.registers.b;
+                        cpu.registers.pc.increment();
+                    },
+                },
+            ),
+            (
+                0x2F,
+                Instruction {
+                    opcode: 0x2F,
+                    mnemonic: "CPL",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.a = !cpu.registers.a;
+                        cpu.registers.f.set(register::Flags::SUBTRACTION, true);
+                        cpu.registers.f.set(register::Flags::HALFCARRY, true);
+                        cpu.registers.pc.increment();
                     },
                 },
             ),
@@ -83,7 +111,9 @@ impl Cpu {
             .get(&opcode)
             .expect(format!("Unknown opcode: {:#04x}", opcode).as_str());
         (instruction.execute)(self);
-        debug!("Opcode: {:#04x}, Registers: {:#?}", opcode, self.registers);
+        debug!("Opcode: {:#04x}", opcode);
+        debug!("Instruction: {:?}", instruction.mnemonic);
+        debug!("Registers: {:#?}", self.registers);
     }
 }
 
@@ -97,5 +127,25 @@ mod tests {
         let mut cpu = Cpu::new(Box::new(RomOnly(vec![0x00; 0x101])));
         cpu.step();
         assert_eq!(cpu.registers.pc.value(), 0x0101);
+    }
+
+    #[test]
+    fn test_cpu_step_nop() {
+        let mut cpu = Cpu::new(Box::new(RomOnly(vec![0x00; 0x101])));
+        let tmp_registers = cpu.registers;
+        cpu.step();
+        assert_eq!(cpu.registers.pc.value(), 0x0101);
+        assert_eq!(
+            cpu.registers,
+            Registers {
+                pc: ProgramCounter(0x0101),
+                ..tmp_registers
+            }
+        );
+    }
+
+    #[test]
+    fn test_cpu_step_jp_a16() {
+        todo!();
     }
 }

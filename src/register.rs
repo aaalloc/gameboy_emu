@@ -19,7 +19,8 @@ impl std::fmt::Debug for Registers {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Registers")
             .field("a", &format_args!("{:#04x}", self.a))
-            .field("f", &format_args!("{:#04x}", self.f.bits()))
+            // format flags as binary like 0b0000_0000
+            .field("f", &format_args!("{:#010b}", self.f.bits()))
             .field("b", &format_args!("{:#04x}", self.b))
             .field("c", &format_args!("{:#04x}", self.c))
             .field("d", &format_args!("{:#04x}", self.d))
