@@ -19,6 +19,6 @@ pub fn main() {
     let rom = cartdrige::load(rom_path);
     let mut cpu = cpu::Cpu::new(rom);
     loop {
-        cpu.cpu_step();
+        cpu.step();
     }
 }

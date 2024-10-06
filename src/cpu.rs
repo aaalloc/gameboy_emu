@@ -77,7 +77,7 @@ impl Cpu {
         }
     }
 
-    pub fn cpu_step(&mut self) {
+    pub fn step(&mut self) {
         let opcode = self.cartdrige.read(self.registers.pc.value());
         let instruction = INSTRUCTION_MAP
             .get(&opcode)
@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn test_cpu_step() {
         let mut cpu = Cpu::new(Box::new(RomOnly(vec![0x00; 0x101])));
-        cpu.cpu_step();
+        cpu.step();
         assert_eq!(cpu.registers.pc.value(), 0x0101);
     }
 }
