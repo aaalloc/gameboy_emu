@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Registers {
     pub a: u8, // Accumulator
     pub f: Flags,
@@ -13,6 +13,23 @@ pub struct Registers {
     pub l: u8,
     pub sp: StackPointer,
     pub pc: ProgramCounter,
+}
+
+impl std::fmt::Debug for Registers {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Registers")
+            .field("a", &format_args!("{:#04x}", self.a))
+            .field("f", &format_args!("{:#04x}", self.f.bits()))
+            .field("b", &format_args!("{:#04x}", self.b))
+            .field("c", &format_args!("{:#04x}", self.c))
+            .field("d", &format_args!("{:#04x}", self.d))
+            .field("e", &format_args!("{:#04x}", self.e))
+            .field("h", &format_args!("{:#04x}", self.h))
+            .field("l", &format_args!("{:#04x}", self.l))
+            .field("sp", &format_args!("{:#06x}", self.sp.0))
+            .field("pc", &format_args!("{:#06x}", self.pc.0))
+            .finish()
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

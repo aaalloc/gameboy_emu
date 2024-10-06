@@ -1,3 +1,7 @@
+use lazy_static::lazy_static;
+use log::debug;
+use std::collections::HashMap;
+
 /// Main logic for the CPU
 /// Following
 /// https://gbdev.io/pandocs/CPU_Registers_and_Flags.html#the-flags-register-lower-8-bits-of-af-register
@@ -9,6 +13,47 @@ use crate::{
 pub struct Cpu {
     pub registers: Registers,
     pub cartdrige: Box<dyn Cartdrige>,
+}
+
+pub struct Instruction {
+    pub opcode: u8,
+    pub mnemonic: &'static str,
+    pub length: u8,
+    pub cycles: u8,
+    pub execute: fn(&mut Cpu),
+}
+
+lazy_static! {
+    pub static ref INSTRUCTION_MAP: HashMap<u8, Instruction> = {
+        let m: HashMap<u8, Instruction> = HashMap::from([
+            (
+                0x00,
+                Instruction {
+                    opcode: 0x00,
+                    mnemonic: "NOP",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.pc.increment();
+                    },
+                },
+            ),
+            (
+                0xc3,
+                Instruction {
+                    opcode: 0xc3,
+                    mnemonic: "JP a16",
+                    length: 3,
+                    cycles: 16,
+                    execute: |cpu: &mut Cpu| {
+                        let word = cpu.cartdrige.read_word(cpu.registers.pc.value());
+                        cpu.registers.pc.0 = word;
+                    },
+                },
+            ),
+        ]);
+        m
+    };
 }
 
 impl Cpu {
@@ -33,17 +78,24 @@ impl Cpu {
     }
 
     pub fn cpu_step(&mut self) {
-        match self.cartdrige.read(self.registers.pc.value()) {
-            0x00 => {
-                // NOP
-                self.registers.pc.increment();
-            }
-            _ => {
-                panic!(
-                    "Unimplemented opcode: {:#04x}",
-                    self.cartdrige.read(self.registers.pc.value())
-                );
-            }
-        }
+        let opcode = self.cartdrige.read(self.registers.pc.value());
+        let instruction = INSTRUCTION_MAP
+            .get(&opcode)
+            .expect(format!("Unknown opcode: {:#04x}", opcode).as_str());
+        (instruction.execute)(self);
+        debug!("Opcode: {:#04x}, Registers: {:#?}", opcode, self.registers);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cartdrige::RomOnly;
+
+    #[test]
+    fn test_cpu_step() {
+        let mut cpu = Cpu::new(Box::new(RomOnly(vec![0x00; 0x101])));
+        cpu.cpu_step();
+        assert_eq!(cpu.registers.pc.value(), 0x0101);
     }
 }

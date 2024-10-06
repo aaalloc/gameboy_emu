@@ -9,7 +9,7 @@ use log::info;
 
 pub fn main() {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
+        .filter_level(log::LevelFilter::Debug)
         .init();
     // set log level default to info
     info!("starting up");

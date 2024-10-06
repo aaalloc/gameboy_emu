@@ -23,6 +23,7 @@ impl From<Address> for usize {
 }
 pub trait Cartdrige: Send {
     fn read(&self, address: u16) -> u8;
+    fn read_word(&self, address: u16) -> u16;
     fn set(&mut self, address: u16, value: u8);
 
     fn ensure_nintendo_logo(&self) {
@@ -73,6 +74,13 @@ impl Cartdrige for RomOnly {
     fn read(&self, address: u16) -> u8 {
         self.0[address as usize]
     }
+
+    fn read_word(&self, address: u16) -> u16 {
+        let low = self.read(address) as u16;
+        let high = self.read(address + 1) as u16;
+        low | (high << 8)
+    }
+
     fn set(&mut self, _address: u16, _value: u8) {
         panic!("Cannot write to ROM");
     }
@@ -97,12 +105,12 @@ pub fn load(path: &str) -> Box<dyn Cartdrige> {
     if rom.len() < 0x0150 {
         panic!("ROM is too small: {:#06x}", rom.len());
     }
+
     let rom_size = rom_size(rom[Address::ROMSize as usize] as usize);
     if rom.len() > rom_size {
         panic!("ROM size is bigger than expected: {:#06x}", rom.len());
     }
 
-    // Cartdrige type
     let res: Box<dyn Cartdrige>;
     match rom[Address::CartridgeType as usize] {
         0x00 => {
