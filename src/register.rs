@@ -41,10 +41,6 @@ impl ProgramCounter {
     pub fn value(&self) -> u16 {
         self.0
     }
-
-    pub fn increment(&mut self) {
-        self.0 += 1;
-    }
 }
 
 bitflags! {

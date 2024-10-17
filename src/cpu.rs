@@ -33,9 +33,7 @@ lazy_static! {
                     mnemonic: "NOP",
                     length: 1,
                     cycles: 4,
-                    execute: |cpu: &mut Cpu| {
-                        cpu.registers.pc.increment();
-                    },
+                    execute: |_cpu: &mut Cpu| {},
                 },
             ),
             (
@@ -60,7 +58,7 @@ lazy_static! {
                     cycles: 4,
                     execute: |cpu: &mut Cpu| {
                         cpu.registers.h = cpu.registers.b;
-                        cpu.registers.pc.increment();
+                        cpu.registers.pc.0 += 1;
                     },
                 },
             ),
@@ -75,7 +73,7 @@ lazy_static! {
                         cpu.registers.a = !cpu.registers.a;
                         cpu.registers.f.set(register::Flags::SUBTRACTION, true);
                         cpu.registers.f.set(register::Flags::HALFCARRY, true);
-                        cpu.registers.pc.increment();
+                        cpu.registers.pc.0 += 1;
                     },
                 },
             ),
@@ -85,6 +83,18 @@ lazy_static! {
 }
 
 impl Cpu {
+    fn fetch(&mut self) -> u8 {
+        let value = self.cartdrige.read(self.registers.pc.value());
+        self.registers.pc.0 += 1;
+        value
+    }
+
+    fn fetch_word(&mut self) -> u16 {
+        let value = self.cartdrige.read_word(self.registers.pc.value());
+        self.registers.pc.0 += 2;
+        value
+    }
+
     pub fn new(cartdrige: Box<dyn Cartdrige>) -> Self {
         Self {
             // Following DMG
@@ -105,8 +115,8 @@ impl Cpu {
         }
     }
 
-    pub fn step(&mut self) {
-        let opcode = self.cartdrige.read(self.registers.pc.value());
+    pub fn step(&mut self) -> &Instruction {
+        let opcode = self.fetch();
         let instruction = INSTRUCTION_MAP
             .get(&opcode)
             .expect(format!("Unknown opcode: {:#04x}", opcode).as_str());
@@ -114,6 +124,7 @@ impl Cpu {
         debug!("Opcode: {:#04x}", opcode);
         debug!("Instruction: {:?}", instruction.mnemonic);
         debug!("Registers: {:#?}", self.registers);
+        instruction
     }
 }
 
@@ -133,7 +144,8 @@ mod tests {
     fn test_cpu_step_nop() {
         let mut cpu = Cpu::new(Box::new(RomOnly(vec![0x00; 0x101])));
         let tmp_registers = cpu.registers;
-        cpu.step();
+        let instruction = cpu.step();
+        assert_eq!(instruction.mnemonic, "NOP");
         assert_eq!(cpu.registers.pc.value(), 0x0101);
         assert_eq!(
             cpu.registers,
@@ -146,6 +158,20 @@ mod tests {
 
     #[test]
     fn test_cpu_step_jp_a16() {
-        todo!();
+        let mut fake_rom_data = vec![0x00; 0xFFF];
+        fake_rom_data[0x100] = 0xc3; // JP a16
+        fake_rom_data[0x101] = 0xFF; // value to jump
+        let mut cpu = Cpu::new(Box::new(RomOnly(fake_rom_data)));
+        let tmp_registers = cpu.registers;
+        let instruction = cpu.step();
+        assert_eq!(instruction.mnemonic, "JP a16");
+        assert_eq!(cpu.registers.pc.value(), 0xFF);
+        assert_eq!(
+            cpu.registers,
+            Registers {
+                pc: ProgramCounter(0xFF),
+                ..tmp_registers
+            }
+        );
     }
 }
