@@ -81,9 +81,7 @@ impl Cartdrige for RomOnly {
         low | (high << 8)
     }
 
-    fn set(&mut self, _address: u16, _value: u8) {
-        panic!("Cannot write to ROM");
-    }
+    fn set(&mut self, _address: u16, _value: u8) {}
 }
 
 fn rom_size(rom_max: usize) -> usize {
