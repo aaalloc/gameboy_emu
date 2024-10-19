@@ -62,6 +62,83 @@ lazy_static! {
                 },
             ),
             (
+                0x30,
+                Instruction {
+                    opcode: 0x30,
+                    mnemonic: "JR NC,r8",
+                    length: 2,
+                    cycles: 8,
+                    execute: |cpu: &mut Cpu| {
+                        let offset = cpu.fetch() as i8;
+                        if !cpu.registers.f.contains(register::Flags::CARRY) {
+                            cpu.registers.pc.0 = (cpu.registers.pc.0 as i32 + offset as i32) as u16;
+                        }
+                    },
+                },
+            ),
+            (
+                0x40,
+                Instruction {
+                    opcode: 0x40,
+                    mnemonic: "LD B,B",
+                    length: 1,
+                    cycles: 4,
+                    execute: |_cpu: &mut Cpu| {},
+                },
+            ),
+            (
+                0x50,
+                Instruction {
+                    opcode: 0x50,
+                    mnemonic: "LD D,B",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.d = cpu.registers.b;
+                        cpu.registers.pc.0 += 1;
+                    },
+                },
+            ),
+            (
+                0x60,
+                Instruction {
+                    opcode: 0x60,
+                    mnemonic: "LD H,B",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.h = cpu.registers.b;
+                        cpu.registers.pc.0 += 1;
+                    },
+                },
+            ),
+            (
+                0x70,
+                Instruction {
+                    opcode: 0x70,
+                    mnemonic: "LD (HL),B",
+                    length: 1,
+                    cycles: 8,
+                    execute: |cpu: &mut Cpu| {
+                        let hl = (cpu.registers.h as u16) << 8 | cpu.registers.l as u16;
+                        cpu.cartdrige.set(hl, cpu.registers.b);
+                        cpu.registers.pc.0 += 1;
+                    },
+                },
+            ),
+            (
+                0x80,
+                Instruction {
+                    opcode: 0x80,
+                    mnemonic: "ADD A,B",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.a = cpu.alu_add(cpu.registers.b);
+                    },
+                },
+            ),
+            (
                 0x60,
                 Instruction {
                     opcode: 0x60,
@@ -239,6 +316,20 @@ impl Cpu {
         result
     }
 
+    fn alu_add(&mut self, value: u8) -> u8 {
+        let result = self.registers.a.wrapping_add(value);
+        self.registers.f.set(register::Flags::ZERO, result == 0);
+        self.registers.f.set(register::Flags::SUBTRACTION, false);
+        self.registers.f.set(
+            register::Flags::HALFCARRY,
+            (self.registers.a & 0x0F) + (value & 0x0F) > 0x0F,
+        );
+        self.registers.f.set(
+            register::Flags::CARRY,
+            (self.registers.a as u16 + value as u16) > 0xFF,
+        );
+        result
+    }
     pub fn new(cartdrige: Box<dyn Cartdrige>) -> Self {
         Self {
             // Following DMG
