@@ -37,6 +37,44 @@ lazy_static! {
                 },
             ),
             (
+                0x10,
+                Instruction {
+                    opcode: 0x10,
+                    mnemonic: "STOP 0",
+                    length: 2,
+                    cycles: 4,
+                    execute: |_cpu: &mut Cpu| {},
+                },
+            ),
+            (
+                0x20,
+                Instruction {
+                    opcode: 0x20,
+                    mnemonic: "JR NZ,r8",
+                    length: 2,
+                    cycles: 8,
+                    execute: |cpu: &mut Cpu| {
+                        let offset = cpu.fetch() as i8;
+                        if !cpu.registers.f.contains(register::Flags::ZERO) {
+                            cpu.registers.pc.0 = (cpu.registers.pc.0 as i32 + offset as i32) as u16;
+                        }
+                    },
+                },
+            ),
+            (
+                0x60,
+                Instruction {
+                    opcode: 0x60,
+                    mnemonic: "LD H,B",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.h = cpu.registers.b;
+                        cpu.registers.pc.0 += 1;
+                    },
+                },
+            ),
+            (
                 0x05,
                 Instruction {
                     opcode: 0x05,
@@ -81,21 +119,6 @@ lazy_static! {
                     cycles: 8,
                     execute: |cpu: &mut Cpu| {
                         cpu.registers.c = cpu.fetch();
-                    },
-                },
-            ),
-            (
-                0x20,
-                Instruction {
-                    opcode: 0x20,
-                    mnemonic: "JR NZ,r8",
-                    length: 2,
-                    cycles: 8,
-                    execute: |cpu: &mut Cpu| {
-                        let offset = cpu.fetch() as i8;
-                        if !cpu.registers.f.contains(register::Flags::ZERO) {
-                            cpu.registers.pc.0 = (cpu.registers.pc.0 as i32 + offset as i32) as u16;
-                        }
                     },
                 },
             ),
@@ -153,19 +176,6 @@ lazy_static! {
                     cycles: 8,
                     execute: |cpu: &mut Cpu| {
                         cpu.registers.a = cpu.fetch();
-                    },
-                },
-            ),
-            (
-                0x60,
-                Instruction {
-                    opcode: 0x60,
-                    mnemonic: "LD H,B",
-                    length: 1,
-                    cycles: 4,
-                    execute: |cpu: &mut Cpu| {
-                        cpu.registers.h = cpu.registers.b;
-                        cpu.registers.pc.0 += 1;
                     },
                 },
             ),
