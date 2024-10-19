@@ -37,57 +37,14 @@ lazy_static! {
                 },
             ),
             (
-                0xc3,
+                0x05,
                 Instruction {
-                    opcode: 0xc3,
-                    mnemonic: "JP a16",
-                    length: 3,
-                    cycles: 16,
-                    execute: |cpu: &mut Cpu| {
-                        let word = cpu.cartdrige.read_word(cpu.registers.pc.value());
-                        cpu.registers.pc.0 = word;
-                    },
-                },
-            ),
-            (
-                0xaf,
-                Instruction {
-                    opcode: 0xaf,
-                    mnemonic: "XOR A, A",
+                    opcode: 0x05,
+                    mnemonic: "DEC B",
                     length: 1,
                     cycles: 4,
                     execute: |cpu: &mut Cpu| {
-                        cpu.registers.a ^= cpu.registers.a;
-                        cpu.registers.f.set(register::Flags::ZERO, true);
-                        cpu.registers.f.set(register::Flags::SUBTRACTION, false);
-                        cpu.registers.f.set(register::Flags::HALFCARRY, false);
-                        cpu.registers.f.set(register::Flags::CARRY, false);
-                    },
-                },
-            ),
-            (
-                0x21,
-                Instruction {
-                    opcode: 0x21,
-                    mnemonic: "LD HL,d16",
-                    length: 3,
-                    cycles: 12,
-                    execute: |cpu: &mut Cpu| {
-                        let word = cpu.fetch_word();
-                        cpu.registers.h = (word >> 8) as u8;
-                        cpu.registers.l = word as u8;
-                    },
-                },
-            ),
-            (
-                0x0E,
-                Instruction {
-                    opcode: 0x0E,
-                    mnemonic: "LD C,d8",
-                    length: 2,
-                    cycles: 8,
-                    execute: |cpu: &mut Cpu| {
-                        cpu.registers.c = cpu.fetch();
+                        cpu.registers.b = cpu.alu_dec(cpu.registers.b);
                     },
                 },
             ),
@@ -100,6 +57,30 @@ lazy_static! {
                     cycles: 8,
                     execute: |cpu: &mut Cpu| {
                         cpu.registers.b = cpu.fetch();
+                    },
+                },
+            ),
+            (
+                0x0D,
+                Instruction {
+                    opcode: 0x0D,
+                    mnemonic: "DEC C",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.c = cpu.alu_dec(cpu.registers.c);
+                    },
+                },
+            ),
+            (
+                0x0E,
+                Instruction {
+                    opcode: 0x0E,
+                    mnemonic: "LD C,d8",
+                    length: 2,
+                    cycles: 8,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.c = cpu.fetch();
                     },
                 },
             ),
@@ -119,14 +100,31 @@ lazy_static! {
                 },
             ),
             (
-                0x3E,
+                0x21,
                 Instruction {
-                    opcode: 0x3E,
-                    mnemonic: "LD A,d8",
-                    length: 2,
-                    cycles: 8,
+                    opcode: 0x21,
+                    mnemonic: "LD HL,d16",
+                    length: 3,
+                    cycles: 12,
                     execute: |cpu: &mut Cpu| {
-                        cpu.registers.a = cpu.fetch();
+                        let word = cpu.fetch_word();
+                        cpu.registers.h = (word >> 8) as u8;
+                        cpu.registers.l = word as u8;
+                    },
+                },
+            ),
+            (
+                0x2F,
+                Instruction {
+                    opcode: 0x2F,
+                    mnemonic: "CPL",
+                    length: 1,
+                    cycles: 4,
+                    execute: |cpu: &mut Cpu| {
+                        cpu.registers.a = !cpu.registers.a;
+                        cpu.registers.f.set(register::Flags::SUBTRACTION, true);
+                        cpu.registers.f.set(register::Flags::HALFCARRY, true);
+                        cpu.registers.pc.0 += 1;
                     },
                 },
             ),
@@ -147,26 +145,14 @@ lazy_static! {
                 },
             ),
             (
-                0x05,
+                0x3E,
                 Instruction {
-                    opcode: 0x05,
-                    mnemonic: "DEC B",
-                    length: 1,
-                    cycles: 4,
+                    opcode: 0x3E,
+                    mnemonic: "LD A,d8",
+                    length: 2,
+                    cycles: 8,
                     execute: |cpu: &mut Cpu| {
-                        cpu.registers.b = cpu.alu_dec(cpu.registers.b);
-                    },
-                },
-            ),
-            (
-                0x0D,
-                Instruction {
-                    opcode: 0x0D,
-                    mnemonic: "DEC C",
-                    length: 1,
-                    cycles: 4,
-                    execute: |cpu: &mut Cpu| {
-                        cpu.registers.c = cpu.alu_dec(cpu.registers.c);
+                        cpu.registers.a = cpu.fetch();
                     },
                 },
             ),
@@ -184,17 +170,31 @@ lazy_static! {
                 },
             ),
             (
-                0x2F,
+                0xaf,
                 Instruction {
-                    opcode: 0x2F,
-                    mnemonic: "CPL",
+                    opcode: 0xaf,
+                    mnemonic: "XOR A, A",
                     length: 1,
                     cycles: 4,
                     execute: |cpu: &mut Cpu| {
-                        cpu.registers.a = !cpu.registers.a;
-                        cpu.registers.f.set(register::Flags::SUBTRACTION, true);
-                        cpu.registers.f.set(register::Flags::HALFCARRY, true);
-                        cpu.registers.pc.0 += 1;
+                        cpu.registers.a ^= cpu.registers.a;
+                        cpu.registers.f.set(register::Flags::ZERO, true);
+                        cpu.registers.f.set(register::Flags::SUBTRACTION, false);
+                        cpu.registers.f.set(register::Flags::HALFCARRY, false);
+                        cpu.registers.f.set(register::Flags::CARRY, false);
+                    },
+                },
+            ),
+            (
+                0xc3,
+                Instruction {
+                    opcode: 0xc3,
+                    mnemonic: "JP a16",
+                    length: 3,
+                    cycles: 16,
+                    execute: |cpu: &mut Cpu| {
+                        let word = cpu.cartdrige.read_word(cpu.registers.pc.value());
+                        cpu.registers.pc.0 = word;
                     },
                 },
             ),
